@@ -150,6 +150,10 @@ class CameraFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        cameraBinding.preLayout.removeAllViews()
+        val width = requireActivity().windowManager.defaultDisplay.width
+        val height = width / 3 * 4
+        addTextureView(width, height)
     }
 
     override fun onStop() {
