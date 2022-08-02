@@ -13,38 +13,19 @@
             android:id="@+id/action_permissionFragment_to_cameraFragment"
             app:popUpTo="@id/permissionFragment"
             app:popUpToInclusive="true"
-            app:destination="@id/imageCameraFragment" />
+            app:destination="@id/cameraFragment" />
     </fragment>
 
     <fragment
-        android:id="@+id/imageCameraFragment"
-        android:name="com.example.camera.ui.PictureCameraFragment"
+        android:id="@+id/cameraFragment"
+        android:name="com.example.camera.ui.CameraFragment"
         android:label="fragment_camera"
-        tools:layout="@layout/fragment_picture_camera" >
-        <action
-            android:id="@+id/action_imageCameraFragment_to_videoCameraFragment"
-            app:popUpTo="@id/imageCameraFragment"
-            app:popUpToInclusive="true"
-            app:destination="@id/videoCameraFragment" />
+        tools:layout="@layout/fragment_camera" >
         <action
             android:id="@+id/action_imageCameraFragment_to_galleryFragment"
             app:destination="@id/galleryFragment" />
     </fragment>
 
-    <fragment
-        android:id="@+id/videoCameraFragment"
-        android:name="com.example.camera.ui.VideoCameraFragment"
-        android:label="VideoCameraFragment"
-        tools:layout="@layout/fragment_video_camera">
-        <action
-            android:id="@+id/action_videoCameraFragment_to_imageCameraFragment"
-            app:popUpTo="@id/videoCameraFragment"
-            app:popUpToInclusive="true"
-            app:destination="@id/imageCameraFragment" />
-        <action
-            android:id="@+id/action_videoCameraFragment_to_galleryFragment"
-            app:destination="@id/galleryFragment" />
-    </fragment>
 
     <fragment
         android:id="@+id/galleryFragment"
@@ -66,6 +47,20 @@
         <argument
             android:name="type"
             app:argType="string"/>
+        <action
+            android:id="@+id/action_showFragment_to_videoFragment"
+            app:destination="@id/videoFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/videoFragment"
+        android:name="com.example.camera.ui.VideoFragment"
+        android:label="fragment_video"
+        tools:layout="@layout/fragment_video" >
+        <argument
+            android:name="path"
+            app:argType="string" />
     </fragment>
 
 </navigation>

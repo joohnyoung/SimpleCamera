@@ -43,24 +43,5 @@ class PictureUtil {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
             return baos.toByteArray()
         }
-
-        /** 写入MediaStroe */
-        fun writeMediaStore(
-            application: Application,
-            picture: CameraViewModel.CombinedCaptureResult
-        ) {
-            val output = ContentValues()
-            output.apply {
-                put(MediaStore.Images.ImageColumns.DISPLAY_NAME, picture.displayName)
-                put(
-                    MediaStore.Images.ImageColumns.DATA,
-                    "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)}"
-                )
-                put(MediaStore.Images.ImageColumns.MIME_TYPE, "image/jpeg")
-            }
-            application.contentResolver.apply {
-                insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, output)
-            }
-        }
     }
 }

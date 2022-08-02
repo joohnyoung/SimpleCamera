@@ -1,13 +1,19 @@
 package com.example.camera.ui
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.ThumbnailUtils
 import android.os.Bundle
+import android.provider.MediaStore
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import androidx.navigation.Navigation
 import com.example.camera.R
 import com.example.camera.databinding.FragmentShowBinding
+import java.io.File
 
 class ShowFragment : Fragment() {
     private var _showFragmentBinding: FragmentShowBinding? = null
@@ -29,24 +35,26 @@ class ShowFragment : Fragment() {
         val type = showFragmentArgs.type
 
         val imageView = showFragmentBinding.showPicture
-        val videoView = showFragmentBinding.showVideo
+        val layout = showFragmentBinding.showLayout
 
-        // 操作数据
+        var bitmap: Bitmap? = null
         if (type == "jpg") {
-            imageView.visibility = View.VISIBLE
-            videoView.visibility = View.GONE
-            // 打开照片
-            val bitmap = BitmapFactory.decodeFile(path)
+            bitmap = BitmapFactory.decodeFile(path)
             imageView.setImageBitmap(bitmap)
-        } else {
-            imageView.visibility = View.GONE
-            videoView.visibility = View.VISIBLE
-            // 打开录像
-            videoView.setVideoPath(path)
-            videoView.start()
+        } else if (type == "mp4") {
+            bitmap = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Video.Thumbnails.MINI_KIND)!!
+            imageView.setImageBitmap(bitmap)
+            val videoStart = Button(requireContext())
+            videoStart.setBackgroundResource(R.drawable.video_start)
+            layout.addView(videoStart)
+            videoStart.setOnClickListener {
+                val bundle = VideoFragmentArgs.Builder(path).build().toBundle()
+
+                Navigation.findNavController(requireActivity(), R.id.fragmentContainer).navigate(
+                    R.id.action_showFragment_to_videoFragment, bundle)
+            }
         }
 
-        // Inflate the layout for this fragment
         return showFragmentBinding.root
     }
 

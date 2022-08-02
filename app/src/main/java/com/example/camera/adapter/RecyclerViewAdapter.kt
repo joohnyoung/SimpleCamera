@@ -47,7 +47,8 @@ class RecyclerViewAdapter(
         holder.imageView.setImageBitmap(customFile.thumbnail)
         // 点击事件
         holder.imageView.setOnClickListener {
-            val bundle = ShowFragmentArgs.Builder(customFile.path, customFile.type).build().toBundle()
+            val bundle = ShowFragmentArgs.Builder(
+                customFile.path, customFile.type).build().toBundle()
             Navigation.findNavController(activity, R.id.fragmentContainer).navigate(
                 R.id.action_galleryFragment_to_showFragment, bundle)
         }

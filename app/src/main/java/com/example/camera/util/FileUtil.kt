@@ -1,5 +1,7 @@
 package com.example.camera.util
 
+import android.app.Activity
+import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -35,10 +37,22 @@ object FileUtil {
     /** 获取文件夹中的所有文件 */
     fun getFiles(context: Context) {
         files.clear()
-        openFolder(context, "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Camera")
-        //openFolder(context, "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)}")
+        openFolder(context, "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)}/MyCamera")
     }
 
+    /** 添加新文件 */
+    fun addFile(application: Application, filePath: String, type: String) {
+        val file = CustomFile(
+            filePath, type, getThumbnail(application, File(filePath), type), getFileTime(filePath)
+        )
+        val tempFiles = ArrayList<CustomFile>()
+        tempFiles.addAll(files)
+        files.clear()
+        files.add(file)
+        files.addAll(tempFiles)
+    }
+
+    /** 对文件进行时间降序排序 */
     private fun sortFiles() {
         Collections.sort(files, object : Comparator<CustomFile>{
             override fun compare(p0: CustomFile, p1: CustomFile): Int {
@@ -54,13 +68,17 @@ object FileUtil {
     /** 打开文件夹 */
     private fun openFolder(context: Context, path: String) {
         val allFiles = File(path).listFiles()
-        for (file in allFiles) {
-            val type = getFileType(file.path)
-            if (type == "folder") {
-                openFolder(context, file.path)
-            } else if (type == "jpg" || type == "mp4") {
-                files.add(CustomFile(file.path, type, getThumbnail(context, file, type), getFileTime(file.path)))
-                sortFiles()
+        if (allFiles != null) {
+            for (file in allFiles) {
+                val type = getFileType(file.path)
+                if (type == "folder") {
+                    openFolder(context, file.path)
+                } else if (type == "jpg" || type == "mp4") {
+                    files.add(
+                        CustomFile(file.path, type, getThumbnail(context, file, type), getFileTime(file.path))
+                    )
+                    sortFiles()
+                }
             }
         }
     }

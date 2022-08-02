@@ -1,6 +1,7 @@
 package com.example.camera.util
 
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.Environment
 import android.view.MotionEvent
@@ -12,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.camera.databinding.ActivityCameraBinding
 import com.example.camera.viewmodel.CameraViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class CameraActivity : AppCompatActivity() {
@@ -19,7 +21,6 @@ class CameraActivity : AppCompatActivity() {
     /** 视图绑定 */
     private lateinit var activityCameraBinding: ActivityCameraBinding
 
-    private val cameraViewModel: CameraViewModel by viewModels()
 
     companion object {
         /** 沉浸式模式参数 */
@@ -34,6 +35,7 @@ class CameraActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         activityCameraBinding = ActivityCameraBinding.inflate(layoutInflater)
         setContentView(activityCameraBinding.root)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         lifecycleScope.launch(Dispatchers.IO) {
             FileUtil.getFiles(applicationContext)
         }

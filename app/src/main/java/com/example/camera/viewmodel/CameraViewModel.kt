@@ -20,6 +20,7 @@ import androidx.core.net.toUri
 import androidx.core.view.MotionEventCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.camera.util.FileUtil
 import com.example.camera.util.PictureUtil
 import kotlinx.coroutines.launch
 import java.io.Closeable
@@ -66,8 +67,6 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
     private lateinit var captureSession: CameraCaptureSession
     /** 用于显示预览画面的容器 */
     private lateinit var previewSurface: Surface
-    /** TextureView */
-    private lateinit var textureView: TextureView
     /** 预览画面的尺寸 */
     private lateinit var previewSize: Size
     /** 设备旋转方向 */
@@ -75,7 +74,7 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
     /** 视频录制 */
     private lateinit var mediaRecorder: MediaRecorder
     /** 文件存储位置 */
-    private val path = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Camera"
+    private val path = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)}/MyCamera"
     private lateinit var displayName: String
     /** 缩放倍数 */
     private var zoom = 1
@@ -88,21 +87,8 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
         imageReader.close()
     }
 
-    /** 切换前置、后置摄像头 */
-    fun changeCamera() {
-        Log.e(TAG, "切换摄像头")
-        cameraId = when (cameraId) {
-            frontCameraId -> backCameraId
-            backCameraId -> frontCameraId
-            else -> null
-        }
-        closeCamera()
-        setupCamera()
-        openCamera(CameraDevice.TEMPLATE_PREVIEW)
-    }
-
     /** 设置相机参数 */
-    fun setupCamera(view: TextureView? = null) {
+    private fun setupCamera() {
         if (cameraId == null) {// 设置相机相关参数
             val cameraManager = app.getSystemService(Context.CAMERA_SERVICE) as CameraManager
             // 获取前置、后置摄像头参数
@@ -127,14 +113,7 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
                 else -> backCameraCharacteristics
             }
         }
-
-        // 设置预览尺寸
-        if (view != null) {
-            textureView = view
-            previewSurface = Surface(textureView.surfaceTexture)
-        }
-        setPreviewSize()
-        textureView.surfaceTexture!!.setDefaultBufferSize(previewSize.width, previewSize.height)
+        // 初始化缩放参数
         zoom = 1
         // 创建文件夹
         File(path).mkdir()
@@ -142,8 +121,7 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
 
     /** 打开相机 */
     @SuppressLint("MissingPermission")
-    fun openCamera(templateType: Int) {
-        setupCamera()
+    private fun openCamera(templateType: Int) {
         val cameraManager = app.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         cameraManager.openCamera(cameraId!!, object : CameraDevice.StateCallback() {
             override fun onOpened(cameraDevice: CameraDevice) {
@@ -209,11 +187,6 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
                     val imageQueue = ArrayBlockingQueue<Image>(1)
                     imageReader.setOnImageAvailableListener({ reader ->
                         Log.e(TAG, "获取图片")
-                        // 清空图片队列
-                        while (!imageQueue.isEmpty()) {
-                            Log.e(TAG, "123")
-                            imageQueue.take().close()
-                        }
                         val image = reader.acquireNextImage()
                         imageQueue.add(image)
                     }, imageReaderHandler)
@@ -230,11 +203,6 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
                                 val displayName = "IMG_${sdf.format(Date())}.jpg"
                                 val image = imageQueue.take()
                                 imageReader.setOnImageAvailableListener(null, null)
-                                // 清空图片队列
-                                while (imageQueue.size > 0) {
-                                    Log.e(TAG, "123")
-                                    imageQueue.take().close()
-                                }
                                 saveImage(
                                     CombinedCaptureResult(
                                     image, result, getOrientation(), ImageFormat.JPEG, displayName)
@@ -259,33 +227,53 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
 
     /** 拍照 */
     fun takePicture() {
-        captureSession.close()
         createCaptureSession(CameraDevice.TEMPLATE_STILL_CAPTURE)
-        restartPreview()
+        cameraHandler.postDelayed({
+            createCaptureSession(CameraDevice.TEMPLATE_PREVIEW)
+        }, 500)
     }
 
     /** 录像 */
-    fun videoStart() {
-        Log.e(TAG, "开始录像")
+    fun videoStart(surfaceTexture: SurfaceTexture, ratio: String) {
         captureSession.close()
         createCaptureSession(CameraDevice.TEMPLATE_RECORD)
     }
 
     /** 停止录像 */
     fun videoStop() {
-        Log.e(TAG, "结束录像")
         mediaRecorder.stop()
+        FileUtil.addFile(app, "${path}/${displayName}", "mp4")
         val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, File("${path}/${displayName}").toUri())
         app.sendBroadcast(mediaScanIntent)
-        restartPreview()
+        createCaptureSession(CameraDevice.TEMPLATE_PREVIEW)
     }
 
-    /** 重新开启预览 */
-    private fun restartPreview() {
-        cameraHandler.postDelayed({
-            captureSession.close()
-            createCaptureSession(CameraDevice.TEMPLATE_PREVIEW)
-        }, 500)
+    /** 切换前置、后置摄像头 */
+    fun changeCamera(surfaceTexture: SurfaceTexture, ratio: String) {
+        Log.e(TAG, "切换摄像头")
+        cameraId = when (cameraId) {
+            frontCameraId -> backCameraId
+            backCameraId -> frontCameraId
+            else -> null
+        }
+        closeCamera()
+        setupCamera()
+        setPreviewSize(ratio)
+        previewSurface = Surface(surfaceTexture)
+        surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
+        openCamera(CameraDevice.TEMPLATE_PREVIEW)
+    }
+
+    /** 开启预览 */
+    fun startPreview(surfaceTexture: SurfaceTexture, ratio: String, model: String) {
+        setupCamera()
+        setPreviewSize(ratio)
+        if (ratio == "3:4" && model == "录像") {
+            previewSize = Size(1440, 1080)
+        }
+        previewSurface = Surface(surfaceTexture)
+        surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
+        openCamera(CameraDevice.TEMPLATE_PREVIEW)
     }
 
     /** 设置MediaRecorder */
@@ -301,7 +289,7 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
             setVideoEncodingBitRate(8*previewSize.width*previewSize.height)
             setVideoFrameRate(30)
             setOrientationHint(getOrientation())
-            //setPreviewDisplay(previewSurface)
+            setPreviewDisplay(previewSurface)
             setVideoSize(previewSize.width, previewSize.height)
             val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.CHINA)
             displayName = "VID_${sdf.format(Date())}.mp4"
@@ -332,6 +320,7 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
             // 后置摄像头直接写入文件
             file.writeBytes(bytes)
         }
+        FileUtil.addFile(app, file.path, "jpg")
         val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, file.toUri())
         app.sendBroadcast(mediaScanIntent)
         Log.e(TAG, "保存成功")
@@ -412,9 +401,14 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
         return  (sensorOrientation + deviceOrientation!! + 360) % 360
     }
 
-    /** 选择预览尺寸 */
-    private fun setPreviewSize() {
-        val aspectRatio = textureView.height.toFloat() / textureView.width
+    /** 设置预览尺寸 */
+    private fun setPreviewSize(ratio: String) {
+        var aspectRatio: Float
+        if (ratio == "3:4") {
+            aspectRatio = 4.toFloat() / 3
+        } else {
+            aspectRatio = 16.toFloat() / 9
+        }
         val sizes = cameraCharacteristics.get(
             CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
             .getOutputSizes(SurfaceTexture::class.java)
