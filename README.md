@@ -2,15 +2,7 @@
 
 ## 预览
 
-![screenshot1](/screenshot/screenshot1.png)
-
-![screenshot2](/screenshot/screenshot2.png)
-
-![screenshot3](/screenshot/screenshot3.png)
-
-![screenshot4](/screenshot/screenshot4.png)
-
-![screenshot5](/screenshot/screenshot5.png)
+<img src="/screenshot/screenshot1.png" alt="screenshot1" style="zoom:50%;" /> <img src="/screenshot/screenshot2.png" alt="screenshot2" style="zoom:50%;" /> <img src="/screenshot/screenshot3.png" alt="screenshot3" style="zoom:50%;" /> <img src="/screenshot/screenshot4.png" alt="screenshot4" style="zoom:50%;" /> <img src="/screenshot/screenshot5.png" alt="screenshot5" style="zoom:50%;" /> 
 
 ## 介绍
 
