@@ -4,15 +4,15 @@
 
 
 
-![screenshot1](F:\AndroidStudio\Camera\screenshot\screenshot1.png)
+![screenshot1](screenshot\screenshot1.png)
 
-![screenshot2](F:\AndroidStudio\Camera\screenshot\screenshot2.png)
+![screenshot2](screenshot\screenshot2.png)
 
-![screenshot3](F:\AndroidStudio\Camera\screenshot\screenshot3.png)
+![screenshot3](screenshot\screenshot3.png)
 
-![sreenshot4](F:\AndroidStudio\Camera\screenshot\sreenshot4.png)
+![sreenshot4](screenshot\sreenshot4.png)
 
-![sreenshot5](F:\AndroidStudio\Camera\screenshot\sreenshot5.png)
+![sreenshot5](screenshot\sreenshot5.png)
 
 ## 介绍
 
