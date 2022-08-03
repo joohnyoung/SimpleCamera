@@ -2,10 +2,12 @@ package com.example.camera.util
 
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import android.hardware.SensorManager
 import android.os.Bundle
 import android.os.Environment
-import android.view.MotionEvent
-import android.view.View
+import android.util.Log
+import android.view.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.MotionEventCompat
@@ -31,11 +33,18 @@ class CameraActivity : AppCompatActivity() {
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
     }
 
+    private lateinit var orientationEventListener: OrientationEventListener
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         activityCameraBinding = ActivityCameraBinding.inflate(layoutInflater)
         setContentView(activityCameraBinding.root)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
+        orientationEventListener = object : OrientationEventListener(this) {
+            override fun onOrientationChanged(p0: Int) {
+                Log.e("this", p0.toString())
+            }
+        }
+
         lifecycleScope.launch(Dispatchers.IO) {
             FileUtil.getFiles(applicationContext)
         }

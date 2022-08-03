@@ -1,7 +1,13 @@
 package com.example.camera.ui
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.SurfaceTexture
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.media.ExifInterface
 import android.os.Bundle
 import android.util.Log
 import android.util.Size

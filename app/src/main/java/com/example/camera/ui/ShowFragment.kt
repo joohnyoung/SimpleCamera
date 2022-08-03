@@ -1,28 +1,36 @@
 package com.example.camera.ui
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.graphics.PointF
 import android.media.ThumbnailUtils
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
+import androidx.core.graphics.values
+import androidx.core.view.MotionEventCompat
+import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import com.example.camera.R
 import com.example.camera.databinding.FragmentShowBinding
-import java.io.File
+import com.example.camera.viewmodel.CameraViewModel
+import kotlin.math.min
+import kotlin.math.sqrt
 
 class ShowFragment : Fragment() {
     private var _showFragmentBinding: FragmentShowBinding? = null
     private val showFragmentBinding get() = _showFragmentBinding!!
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -41,9 +49,16 @@ class ShowFragment : Fragment() {
         if (type == "jpg") {
             bitmap = BitmapFactory.decodeFile(path)
             imageView.setImageBitmap(bitmap)
+            imageView.setFitCenter()
+            imageView.setOnTouchListener { view, event ->
+                onTouch(view, event)
+                true
+            }
         } else if (type == "mp4") {
             bitmap = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Video.Thumbnails.MINI_KIND)!!
             imageView.setImageBitmap(bitmap)
+            imageView.setFitCenter()
+            // 为视频添加一个播放按钮
             val videoStart = Button(requireContext())
             videoStart.setBackgroundResource(R.drawable.video_start)
             layout.addView(videoStart)
@@ -58,8 +73,76 @@ class ShowFragment : Fragment() {
         return showFragmentBinding.root
     }
 
+    // ImageView 触摸事件监听
+    private var distance = 1.0
+    private var startPointF = PointF()
+    private var startMatrix = Matrix()
+    private var endMatrix = Matrix()
+    private var MODE = 0
+    private fun onTouch(v: View, event: MotionEvent) {
+        val action = MotionEventCompat.getActionMasked(event)
+        val view = v as ImageView
+        when (action) {
+            MotionEvent.ACTION_DOWN -> {
+                startMatrix.set(view.imageMatrix)
+                startPointF.set(event.x, event.y)
+                MODE = 1
+            }
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                // 最后的状态传给起始状态
+                startMatrix.set(endMatrix)
+                // 计算起始状态两指间的距离
+                distance = getDistance(event)
+                MODE = 2
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (MODE == 2) {
+                    val scale = (getDistance(event) / distance).toFloat()
+                    endMatrix.set(startMatrix)
+                    endMatrix.postScale(scale, scale, startPointF.x, startPointF.y)
+                } else if (MODE == 1) {
+                    endMatrix.set(startMatrix)
+                    endMatrix.postTranslate(event.x - startPointF.x, event.y - startPointF.y)
+                }
+            }
+            MotionEvent.ACTION_POINTER_UP -> MODE = 0
+        }
+        view.imageMatrix = endMatrix
+    }
+
+    /** 计算两点间的距离 */
+    private fun getDistance(event: MotionEvent): Double {
+        val x = event.getX(0) - event.getX(1)
+        val y = event.getY(0) - event.getY(1)
+        return sqrt(((x * x + y * y).toDouble()))
+    }
+
+    //将图片设置为FitCenter
+    private fun ImageView.setFitCenter() {
+        val dwidth = drawable.intrinsicWidth
+        val dheight = drawable.intrinsicHeight
+
+        val width = requireActivity().windowManager.defaultDisplay.width
+        val height = requireActivity().windowManager.defaultDisplay.height
+
+        val widthPercentage = width.toFloat() / dwidth.toFloat()
+        val heightPercentage = height.toFloat() / dheight.toFloat()
+        val minPercentage = min(widthPercentage, heightPercentage)
+
+        val targetWidth = minPercentage * dwidth
+        val targetHeight = minPercentage * dheight
+
+        val matrix = imageMatrix
+        matrix.setScale(minPercentage, minPercentage)
+        matrix.postTranslate((width-targetWidth)*0.5f, (height-targetHeight)*0.5f)
+        imageMatrix = matrix
+        endMatrix = matrix
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         _showFragmentBinding = null
     }
 }
+
+

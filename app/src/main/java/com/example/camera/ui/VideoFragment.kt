@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.MediaController
 import android.widget.VideoView
 import com.example.camera.R
 import com.example.camera.databinding.FragmentShowBinding
@@ -31,6 +32,7 @@ class VideoFragment : Fragment() {
 
         videoFragmentBinding.videoView.apply {
             setVideoPath(path)
+            setMediaController(MediaController(requireContext()))
             start()
         }
 

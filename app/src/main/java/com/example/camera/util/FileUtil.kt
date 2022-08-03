@@ -5,15 +5,19 @@ import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.ExifInterface
 import android.media.ThumbnailUtils
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import android.util.Size
 import androidx.lifecycle.MutableLiveData
 import com.example.camera.R
 import kotlinx.coroutines.GlobalScope
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.Comparator
@@ -105,7 +109,7 @@ object FileUtil {
         if (type == "jpg") {
             bitmap = BitmapFactory.decodeFile(file.path)
         } else if (type == "mp4") {
-            bitmap = ThumbnailUtils.createVideoThumbnail(file.path, MediaStore.Images.Thumbnails.MINI_KIND)
+            bitmap = ThumbnailUtils.createVideoThumbnail(file.path, MediaStore.Video.Thumbnails.MICRO_KIND)
         }
 
         // 裁剪图片

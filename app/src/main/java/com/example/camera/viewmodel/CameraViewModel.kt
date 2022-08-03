@@ -154,6 +154,7 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
         imageReader = ImageReader.newInstance(
             previewSize.width, previewSize.height, ImageFormat.JPEG, 1)
         var target = listOf(previewSurface, imageReader.surface)
+        val orientation = cameraCharacteristics[CameraCharacteristics.SENSOR_ORIENTATION]
         when (templateType) {
             CameraDevice.TEMPLATE_PREVIEW -> {
                 captureRequest = camera.createCaptureRequest(
@@ -205,7 +206,7 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
                                 imageReader.setOnImageAvailableListener(null, null)
                                 saveImage(
                                     CombinedCaptureResult(
-                                    image, result, getOrientation(), ImageFormat.JPEG, displayName)
+                                    image, result, orientation!!, ImageFormat.JPEG, displayName)
                                 )
                             }
                         }
@@ -329,9 +330,7 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
     /** 画面触摸处理 */
     private var oldDis = 1
     fun onTouchEvent(event: MotionEvent): Boolean {
-        if (event.pointerCount == 1) {
-            handleFocusMetering(event)
-        } else {
+        if (event.pointerCount == 2) {
             val action = MotionEventCompat.getActionMasked(event)
             when (action) {
                 MotionEvent.ACTION_POINTER_DOWN -> {
@@ -381,15 +380,13 @@ class CameraViewModel(application: Application): AndroidViewModel(application) {
         captureSession.setRepeatingRequest(captureRequest.build(), null, cameraHandler)
     }
 
-    /** 单指变焦 */
-    private fun handleFocusMetering(event: MotionEvent) {}
-
     /** 获取捕获方向 */
     private fun getOrientation(): Int {
         if (deviceOrientation == android.view.OrientationEventListener.ORIENTATION_UNKNOWN) {
             return 0
         }
         val sensorOrientation = cameraCharacteristics[CameraCharacteristics.SENSOR_ORIENTATION]!!
+        Log.e(TAG, "deviceOrientation:$deviceOrientation\nsensorOrientation:$sensorOrientation")
         // 将设备旋转角度转换为90度的倍数
         deviceOrientation = (deviceOrientation!! + 45) / 90 * 90
         // 处理前置摄像头(没有做镜像处理）
