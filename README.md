@@ -2,17 +2,15 @@
 
 ## 预览
 
+![screenshot1](/screenshot/screenshot1.png)
 
+![screenshot2](/screenshot/screenshot2.png)
 
-![screenshot1](screenshot\screenshot1.png)
+![screenshot3](/screenshot/screenshot3.png)
 
-![screenshot2](screenshot\screenshot2.png)
+![screenshot4](/screenshot/screenshot4.png)
 
-![screenshot3](screenshot\screenshot3.png)
-
-![sreenshot4](screenshot\sreenshot4.png)
-
-![sreenshot5](screenshot\sreenshot5.png)
+![screenshot5](/screenshot/screenshot5.png)
 
 ## 介绍
 
