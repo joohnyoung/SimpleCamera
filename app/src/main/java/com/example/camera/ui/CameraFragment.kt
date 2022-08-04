@@ -1,20 +1,11 @@
 package com.example.camera.ui
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.graphics.SurfaceTexture
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
-import android.media.ExifInterface
 import android.os.Bundle
 import android.util.Log
-import android.util.Size
 import android.view.*
 import android.widget.Toast
-import androidx.core.view.get
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.Navigation
@@ -43,22 +34,19 @@ class CameraFragment : Fragment() {
         // 切换后置摄像头与前置摄像头
         cameraBinding.btnChangeCamera.setOnClickListener {
             it.isEnabled = false
-            val ratio = cameraBinding.textPreviewSize.text.toString()
-            cameraViewModel.changeCamera(surfaceTexture, ratio)
+            cameraViewModel.changeCamera(surfaceTexture, cameraBinding.textPreviewSize.text.toString())
             it.postDelayed({ it.isEnabled = true }, 500)
         }
         // 捕获画面
         var isCaptureVideo = false
         cameraBinding.btnCaptureImage.setOnClickListener {
             it.isEnabled = false
-            cameraViewModel.deviceOrientation =
-                requireActivity().windowManager.defaultDisplay.orientation
             if (cameraBinding.textCameraModel.text == "拍照") {
                 cameraViewModel.takePicture()
             } else { // 录像
                 if (!isCaptureVideo) {
                     it.setBackgroundResource(R.drawable.capture_stop)
-                    cameraViewModel.videoStart(surfaceTexture, cameraBinding.textPreviewSize.text.toString())
+                    cameraViewModel.videoStart()
                     isCaptureVideo = true
                 } else {
                     it.setBackgroundResource(R.drawable.capture_start)
@@ -70,31 +58,29 @@ class CameraFragment : Fragment() {
         }
         // 切换模式
         cameraBinding.btnChangeModel.setOnClickListener {
-            Log.e(TAG, "切换拍摄模式")
             val textView = cameraBinding.textCameraModel
             val button = cameraBinding.btnChangeModel
+            cameraViewModel.closeCamera()
+            cameraBinding.preLayout.removeAllViews()
             if (textView.text == "拍照") {
                 Toast.makeText(requireContext(), "切换为录像模式", Toast.LENGTH_SHORT).show()
                 button.setBackgroundResource(R.drawable.model_video)
                 textView.text = "录像"
                 cameraBinding.textPreviewSize.text = "9:16"
                 height = width / 9 * 16
-                cameraBinding.preLayout.removeAllViews()
-                addTextureView(width, height)
             } else {
                 Toast.makeText(requireContext(), "切换为拍照模式", Toast.LENGTH_SHORT).show()
                 button.setBackgroundResource(R.drawable.model_picture)
                 textView.text = "拍照"
                 cameraBinding.textPreviewSize.text = "3:4"
                 height = width / 9 * 12
-                cameraBinding.preLayout.removeAllViews()
-                addTextureView(width, height)
             }
+            addTextureView(width, height)
         }
         // 切换预览尺寸
         cameraBinding.btnChangeSize.setOnClickListener {
-            Log.e(TAG, "切换预览尺寸")
             val textView = cameraBinding.textPreviewSize
+            cameraViewModel.closeCamera()
             if (textView.text == "3:4") {
                 Toast.makeText(requireContext(), "尺寸切换为9:16", Toast.LENGTH_SHORT).show()
                 textView.text = "9:16"
@@ -129,25 +115,23 @@ class CameraFragment : Fragment() {
         textureView.layoutParams = params
         cameraBinding.preLayout.addView(textureView)
         textureView.surfaceTextureListener = surfaceTextureListener
-        textureView.setOnTouchListener(onTouchListner)
+        textureView.setOnTouchListener(onTouchListener)
     }
 
-    // 创建 SurfaceTexture 监听
+    /** SurfaceTexture 监听 */
     private val surfaceTextureListener = object : TextureView.SurfaceTextureListener{
         override fun onSurfaceTextureAvailable(mSurfaceTexture: SurfaceTexture, width: Int, height: Int) {
-            Log.e(TAG, "TextureView已就绪")
             surfaceTexture = mSurfaceTexture
             val ratio = cameraBinding.textPreviewSize.text.toString()
-            val model = cameraBinding.textCameraModel.text.toString()
-            cameraViewModel.startPreview(surfaceTexture, ratio, model)
+            cameraViewModel.initCameraInfo(surfaceTexture, ratio)
         }
         override fun onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, width: Int, height: Int) {}
         override fun onSurfaceTextureDestroyed(p0: SurfaceTexture): Boolean  = false
         override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) {}
     }
 
-    // TextureView 触摸监听
-    private val onTouchListner = object : View.OnTouchListener {
+    /** TextureView 触摸监听 */
+    private val onTouchListener = object : View.OnTouchListener {
         override fun onTouch(p0: View?, event: MotionEvent): Boolean {
             cameraViewModel.onTouchEvent(event)
             return true
@@ -160,6 +144,13 @@ class CameraFragment : Fragment() {
         val width = requireActivity().windowManager.defaultDisplay.width
         val height = width / 3 * 4
         addTextureView(width, height)
+        // 设备方向改变监听
+        val orientationEventListener = object : OrientationEventListener(requireContext()) {
+            override fun onOrientationChanged(orientation: Int) {
+                cameraViewModel.setOrientation(orientation)
+            }
+        }
+        orientationEventListener.enable()
     }
 
     override fun onStop() {
@@ -168,6 +159,7 @@ class CameraFragment : Fragment() {
     }
 
     override fun onDestroy() {
+        cameraViewModel.releaseThread()
         _cameraBinding = null
         super.onDestroy()
     }

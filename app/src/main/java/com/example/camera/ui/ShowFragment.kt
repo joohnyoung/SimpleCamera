@@ -8,7 +8,6 @@ import android.graphics.PointF
 import android.media.ThumbnailUtils
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -16,13 +15,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
-import androidx.core.graphics.values
 import androidx.core.view.MotionEventCompat
-import androidx.fragment.app.viewModels
 import androidx.navigation.Navigation
 import com.example.camera.R
 import com.example.camera.databinding.FragmentShowBinding
-import com.example.camera.viewmodel.CameraViewModel
 import kotlin.math.min
 import kotlin.math.sqrt
 
@@ -119,22 +115,23 @@ class ShowFragment : Fragment() {
 
     //将图片设置为FitCenter
     private fun ImageView.setFitCenter() {
-        val dwidth = drawable.intrinsicWidth
-        val dheight = drawable.intrinsicHeight
-
+        // 图片尺寸
+        val imageWidth = drawable.intrinsicWidth
+        val imageHeight = drawable.intrinsicHeight
+        // 手机屏幕尺寸
         val width = requireActivity().windowManager.defaultDisplay.width
         val height = requireActivity().windowManager.defaultDisplay.height
-
-        val widthPercentage = width.toFloat() / dwidth.toFloat()
-        val heightPercentage = height.toFloat() / dheight.toFloat()
-        val minPercentage = min(widthPercentage, heightPercentage)
-
-        val targetWidth = minPercentage * dwidth
-        val targetHeight = minPercentage * dheight
-
+        // 计算最小的缩放倍数，使宽或者高与屏幕一致
+        val widthScale = width.toFloat() / imageWidth.toFloat()
+        val heightScale = height.toFloat() / imageHeight.toFloat()
+        val minScale = min(widthScale, heightScale)
+        // 缩放后的图片尺寸
+        val targetWidth = minScale * imageWidth
+        val targetHeight = minScale * imageHeight
+        // 缩放、移动图片
         val matrix = imageMatrix
-        matrix.setScale(minPercentage, minPercentage)
-        matrix.postTranslate((width-targetWidth)*0.5f, (height-targetHeight)*0.5f)
+        matrix.setScale(minScale, minScale)
+        matrix.postTranslate((width-targetWidth) / 2, (height-targetHeight) / 2)
         imageMatrix = matrix
         endMatrix = matrix
     }

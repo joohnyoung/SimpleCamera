@@ -23,6 +23,7 @@ class CameraActivity : AppCompatActivity() {
     /** 视图绑定 */
     private lateinit var activityCameraBinding: ActivityCameraBinding
 
+    private val cameraViewModel: CameraViewModel by viewModels()
 
     companion object {
         /** 沉浸式模式参数 */
@@ -38,12 +39,6 @@ class CameraActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         activityCameraBinding = ActivityCameraBinding.inflate(layoutInflater)
         setContentView(activityCameraBinding.root)
-
-        orientationEventListener = object : OrientationEventListener(this) {
-            override fun onOrientationChanged(p0: Int) {
-                Log.e("this", p0.toString())
-            }
-        }
 
         lifecycleScope.launch(Dispatchers.IO) {
             FileUtil.getFiles(applicationContext)
